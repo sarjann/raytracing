@@ -96,7 +96,7 @@ public:
     virtual float get_directional_intensity(Point point, Point direction) {
         throw "Not Implemented";
     };
-    void random_move() {
+    void update_state() {
         float scalar = 0.001;
         this->position.x += (rand() % 10 - 5) * scalar;
         this->position.y += (rand() % 10 - 5) * scalar;
@@ -106,6 +106,7 @@ public:
 protected:
     Point position;
     Color color = Color{0, 0, 0, 255};
+    float specular = 0;
 };
 
 class Sphere : public RenderObject {
@@ -121,7 +122,8 @@ public:
         float b = 2 * vector_dot(direction, co);
         float c = vector_dot(co, co) - this->radius * this->radius;
         float b24ac = b * b - 4 * a * c;
-        float sqrt_b24ac = q_rsqrt(b24ac);
+        // float sqrt_b24ac = q_rsqrt(b24ac);
+        float sqrt_b24ac = sqrt(b24ac);
 
         if (b24ac >= 0) {
             float distance_plus = (-b + sqrt_b24ac) / (2 * a);
@@ -144,23 +146,55 @@ public:
     };
 
     float get_directional_intensity(Point point, Point direction) {
+        float intensity = 0;
+
+        // Common
         Point norm_vector = vector_sub(point, this->position);
-        float norm_mag = vector_mag(norm_vector);
-        float direction_mag = vector_mag(direction);
+        float norm_dot_direction = vector_dot(norm_vector, direction);
 
-        float intensity = vector_dot(norm_vector, direction);
-        intensity /= (direction_mag * norm_mag);
+        // Diffuse
+        if (norm_dot_direction > 0) {
+            float norm_mag = vector_mag(norm_vector);
+            float direction_mag = vector_mag(direction);
 
+            float divisor = norm_mag * direction_mag;
+            float diffuse_intensity = norm_dot_direction /= divisor;
+
+            intensity += diffuse_intensity;
+        }
+
+        // Specular
+        if (this->specular != 0) {
+            Point reflection = vector_sub(
+                    vector_scalar(norm_vector, 2 * norm_dot_direction),
+                    direction);
+
+            Point v = vector_sub(Point{0, 0, 0}, point);
+            float v_mag = vector_mag(v);
+            float reflect_product = vector_dot(reflection, v);
+            float reflection_mag = vector_mag(reflection);
+            float reflection_intensity = pow(
+                    reflect_product / (reflection_mag * v_mag), this->specular);
+
+            if (reflection_intensity > 0) {
+                intensity += reflection_intensity;
+            }
+        }
+        if (intensity > 1) {
+            intensity = 1;
+        }
         if (intensity < 0) {
-            return 0;
+            intensity = 0;
         }
         return intensity;
     };
 
-    Sphere(Point position, float radius, Color color = Color{0, 0, 0, 255}) {
+    Sphere(Point position, float radius, Color color = Color{0, 0, 0, 255},
+           float specular = 0) {
         this->position = position;
         this->radius = radius;
         this->color = color;
+        this->specular = specular;
     }
 };
 
@@ -195,9 +229,9 @@ public:
         this->position = position;
         this->color = color;
     };
-    void custom() { this->random_move(); }
-    void random_move() {
-        float scalar = 0.10;
+    void custom() { this->update_state(); }
+    void update_state() {
+        float scalar = 0.05;
         this->position.x += (rand() % 10 - 5) * scalar;
         this->position.y += (rand() % 10 - 5) * scalar;
         this->position.z += (rand() % 10 - 5) * scalar;
@@ -259,8 +293,8 @@ void SDL_Draw(SDL_Renderer *renderer, Point point, Color color,
 Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
                std::vector<Light *> *lights) {
     Point origin = Point{0, 0, 0};
-    // Color color = Color{0, 0, 0}; // Black
-    Color color = Color{255, 255, 255}; // White
+    Color color = Color{0, 0, 0}; // Black
+    // Color color = Color{255, 255, 255}; // White
 
     int distance = std::numeric_limits<int>::max();
     bool intercepts = false;
@@ -286,9 +320,7 @@ Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
             Light *light = lights->at(i);
             intensity += light->get_intensity(closest_object, intercept_point);
         }
-        if (intensity > 0) {
-            color = color_scalar(closest_object->get_color(), intensity);
-        }
+        color = color_scalar(closest_object->get_color(), intensity);
     }
     return color;
 }
@@ -306,18 +338,23 @@ void render(SDL_Renderer *renderer, std::vector<RenderObject *> *render_objects,
     }
 }
 
-void free_memory(std::vector<RenderObject *> *render_objects) {
+void free_memory(std::vector<RenderObject *> *render_objects,
+                 std::vector<Light *> *lights) {
     std::cout << "Freeing Memory" << std::endl;
     for (int i = 0; i < render_objects->size(); i++) {
         RenderObject *object = render_objects->at(i);
         free(object);
     }
+    for (int i = 0; i < lights->size(); i++) {
+        Light *light = lights->at(i);
+        free(light);
+    }
 }
 
 Sphere *create_sphere(Point position, float radius,
-                      Color color = Color{0, 0, 0, 255}) {
+                      Color color = Color{0, 0, 0, 255}, float specular = 0) {
     Sphere *sphere = (Sphere *)malloc(sizeof(Sphere));
-    sphere = new Sphere(position, radius, color);
+    sphere = new Sphere(position, radius, color, specular);
     return sphere;
 }
 
@@ -325,7 +362,7 @@ void update_state(SDL_Renderer *renderer,
                   std::vector<RenderObject *> *render_objects) {
     for (int i = 0; i < render_objects->size(); i++) {
         RenderObject *object = render_objects->at(i);
-        object->random_move();
+        object->update_state();
     }
 }
 
@@ -354,11 +391,14 @@ int main(int argc, char *argv[]) {
     // Make renderable objects
     std::vector<RenderObject *> render_objects;
     render_objects.push_back(
-            create_sphere(Point{0, -1, 3}, 1, Color{255, 0, 0}));
+            create_sphere(Point{0, -1, 3}, 1, Color{255, 0, 0}, 500));
     render_objects.push_back(
-            create_sphere(Point{2, 0, 4}, 1, Color{0, 0, 255}));
+            create_sphere(Point{2, 0, 4}, 1, Color{0, 0, 255}, 500));
     render_objects.push_back(
-            create_sphere(Point{-2, 0, 4}, 1, Color{0, 255, 0}));
+            create_sphere(Point{-2, 0, 4}, 1, Color{0, 255, 0}, 10));
+    // render_objects.push_back(
+    //         create_sphere(Point{0, -5001, 0}, 5000, Color{255, 255, 0},
+    //         1000));
 
     // int num_to_add = 10;
     // // Random colors
@@ -385,7 +425,9 @@ int main(int argc, char *argv[]) {
 
             SDL_RenderPresent(renderer);
         };
-        // lights[1]->custom();
+        for (int i = 0; i < lights.size(); i++) {
+            lights[i]->custom();
+        }
 
         frame_count++;
         if (frame_count % 100 == 0) {
@@ -407,7 +449,7 @@ int main(int argc, char *argv[]) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 close = true;
-                free_memory(&render_objects);
+                free_memory(&render_objects, &lights);
             }
         }
     }
