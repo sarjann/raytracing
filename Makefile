@@ -1,14 +1,16 @@
 CFLAGS := `sdl2-config --libs --cflags` -ggdb3 -O0 -Wall -lSDL2_image -lm
 CFLAGS_RELEASE := `sdl2-config --libs --cflags` -ggdb3 -O3 -Wall -lSDL2_image -lm
+LOCAL_INCLUDE = -I./include
+CPP_FILES := $(wildcard ./src/*.cpp)
 
 run:
 	@make clean
-	@g++ ./src/main.cpp -o target/out $(CFLAGS)
+	@g++ $(CPP_FILES) $(LOCAL_INCLUDE) -o target/out $(CFLAGS)
 	@./target/out
 
 release:
 	@make clean
-	@g++ ./src/main.cpp -o target/out $(CFLAGS_RELEASE)
+	@g++ $(CPP_FILES) $(LOCAL_INCLUDE) -o target/out $(CFLAGS_RELEASE)
 	@./target/out
 
 clean:
