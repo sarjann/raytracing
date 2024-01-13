@@ -1,5 +1,5 @@
-CFLAGS := `sdl2-config --libs --cflags` -ggdb3 -O0 -Wall -lSDL2_image -lm
-CFLAGS_RELEASE := `sdl2-config --libs --cflags` -ggdb3 -O3 -Wall -lSDL2_image -lm
+CFLAGS := `sdl2-config --libs --cflags` -ggdb3 -O0 -Wall -lSDL2_image -lm -std=c++20
+CFLAGS_RELEASE := `sdl2-config --libs --cflags` -ggdb3 -O3 -Wall -lSDL2_image -lm  -std=c++20
 LOCAL_INCLUDE = -I./include
 CPP_FILES := $(wildcard ./src/*.cpp)
 

@@ -5,22 +5,30 @@
 
 class Light {
 public:
-    float intensity;
+    double intensity;
     Color color;
+    Point position;
+    virtual bool is_shadowed(Point point, RenderObject *render_object) {
+        throw "Not Implemented";
+    };
     virtual void custom() {}
-    virtual float get_intensity(RenderObject *render_object, Point point) {
+    virtual double get_intensity(RenderObject *render_object, Point point) {
         throw "Not Implemented";
     };
 };
 
 class AmbientLight : public Light {
 public:
-    AmbientLight(float intensity, Color color = Color{255, 255, 255}) {
+    AmbientLight(double intensity, Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->color = color;
     };
+    Point position;
+    bool is_shadowed(Point point, RenderObject *render_object) {
+        return false;
+    };
     void custom() {}
-    float get_intensity(RenderObject *render_object, Point point) {
+    double get_intensity(RenderObject *render_object, Point point) {
         return this->intensity;
     };
 };
@@ -28,23 +36,28 @@ public:
 class PointLight : public Light {
 public:
     Point position;
-    PointLight(float intensity, Point position,
+    PointLight(double intensity, Point position,
                Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->position = position;
         this->color = color;
     };
+    bool is_shadowed(Point point, RenderObject *render_object) {
+        bool intercepts =
+                render_object->is_shadowed_point(point, this->position);
+        return intercepts;
+    };
     void custom() { this->update_state(); }
     void update_state() {
-        float scalar = 0.05;
+        double scalar = 0.1;
         this->position.x += (rand() % 10 - 5) * scalar;
         this->position.y += (rand() % 10 - 5) * scalar;
         this->position.z += (rand() % 10 - 5) * scalar;
     };
-    float get_intensity(RenderObject *render_object, Point point) {
-        Point direction = vector_sub(point, this->position);
+    double get_intensity(RenderObject *render_object, Point point) {
+        Point direction = vector_sub(this->position, point);
 
-        float intensity =
+        double intensity =
                 render_object->get_directional_intensity(point, direction);
         intensity = intensity * this->intensity;
         return intensity;
@@ -54,14 +67,19 @@ public:
 class DirectionalLight : public Light {
 public:
     Point direction;
-    DirectionalLight(float intensity, Point direction,
+    DirectionalLight(double intensity, Point direction,
                      Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->direction = direction;
         this->color = color;
     };
-    float get_intensity(RenderObject *render_object, Point point) {
-        float intensity = render_object->get_directional_intensity(
+    bool is_shadowed(Point point, RenderObject *render_object) {
+        bool intercepts =
+                render_object->is_shadowed_directional(point, this->direction);
+        return intercepts;
+    };
+    double get_intensity(RenderObject *render_object, Point point) {
+        double intensity = render_object->get_directional_intensity(
                 point, this->direction);
         intensity = intensity * this->intensity;
         return intensity;
