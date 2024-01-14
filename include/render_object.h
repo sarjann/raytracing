@@ -103,7 +103,8 @@ public:
 
     bool is_shadowed_point(Point origin, Point light_source) {
         double epsilon = 0.0001;
-        Point light_direction = vector_sub(light_source, origin);
+        Point light_direction = vector_sub(origin, light_source);
+        double light_distance = vector_mag(light_direction);
         Point norm_towards_light =
                 vector_div(light_direction, -vector_mag(light_direction));
 
@@ -119,11 +120,11 @@ public:
 
         if (b24ac >= 0) {
             double distance_plus = (-b + sqrt_b24ac) / (2 * a);
-            if (distance_plus > 0) {
+            if (distance_plus > 0 && distance_plus < light_distance) {
                 return true;
             }
             double distance_minus = (-b - sqrt_b24ac) / (2 * a);
-            if (distance_minus > 0) {
+            if (distance_minus > 0 && distance_minus < light_distance) {
                 return true;
             }
         }

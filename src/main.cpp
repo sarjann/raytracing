@@ -102,6 +102,7 @@ Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
             // Calculate intensity
             intensity += light->get_intensity(closest_object, intercept_point);
         }
+        intensity = std::min(intensity, 1.0);
         color = color_scalar(closest_object->get_color(), intensity);
     }
     return color;
@@ -206,31 +207,17 @@ int main(int argc, char *argv[]) {
     surface = SDL_GetWindowSurface(window);
 
     bool close = false;
-    Point offset = Point{0, 0, 2};
+    Point offset = Point{0, 0, 3};
+    // offset = Point{0, 0, 0};
 
     // Make lights
     std::vector<Light *> lights;
-    // lights.push_back(new AmbientLight(0.2));
-    // lights.push_back(new PointLight(0.6, vector_add(Point{2, 1, 0},
-    //                 offset)));
-    // lights.push_back(new DirectionalLight(0.2, Point{1, 4, 4}));
-
-
-    // lights.push_back(new DirectionalLight(0.2, Point{1, 4, 4}));
-
-    // lights.push_back(new PointLight(0.6, vector_add(Point{2, 1, 0},
-    // offset)));
-
-
-    lights.push_back(new PointLight(0.6, vector_add(Point{1, -5, 0},
-                    offset)));
-    // lights.push_back(new DirectionalLight(0.4, Point{1, -5, 0}));
+    lights.push_back(new AmbientLight(0.2));
+    lights.push_back(new PointLight(0.6, vector_add(Point{2, 1, 0}, offset)));
+    lights.push_back(new DirectionalLight(0.2, Point{1, 4, 4}));
 
     // Make renderable objects
     std::vector<RenderObject *> render_objects;
-    // render_objects.push_back(
-    //         create_sphere(Point{0, 0, 30}, 0.001, Color{255, 255, 255},
-    //         1000));
     render_objects.push_back(
             create_sphere(Point{0, -1, 3}, 1, Color{255, 0, 0}, 500));
     render_objects.push_back(
@@ -239,6 +226,7 @@ int main(int argc, char *argv[]) {
             create_sphere(Point{-2, 0, 4}, 1, Color{0, 255, 0}, 500));
     // render_objects.push_back(
     //         create_sphere(Point{0, 0, 60}, 50, Color{255, 255, 255}, 1000));
+
     render_objects.push_back(
             create_sphere(Point{0, -5001, 0}, 5000, Color{255, 255, 0}, 1000));
 

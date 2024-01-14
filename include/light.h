@@ -55,7 +55,7 @@ public:
         this->position.z += (rand() % 10 - 5) * scalar;
     };
     double get_intensity(RenderObject *render_object, Point point) {
-        Point direction = vector_sub(this->position, point);
+        Point direction = vector_sub(point, this->position);
 
         double intensity =
                 render_object->get_directional_intensity(point, direction);
