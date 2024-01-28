@@ -5,21 +5,22 @@
 
 class Light {
 public:
-    double intensity;
+    ColorIntensity intensity;
     Color color;
     Point position;
     virtual bool is_shadowed(Point point, RenderObject *render_object) {
         throw "Not Implemented";
     };
     virtual void custom() {}
-    virtual double get_intensity(RenderObject *render_object, Point point) {
+    virtual ColorIntensity get_intensity(RenderObject *render_object,
+                                         Point point) {
         throw "Not Implemented";
     };
 };
 
 class AmbientLight : public Light {
 public:
-    AmbientLight(double intensity, Color color = Color{255, 255, 255}) {
+    AmbientLight(ColorIntensity intensity, Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->color = color;
     };
@@ -28,7 +29,7 @@ public:
         return false;
     };
     void custom() {}
-    double get_intensity(RenderObject *render_object, Point point) {
+    ColorIntensity get_intensity(RenderObject *render_object, Point point) {
         return this->intensity;
     };
 };
@@ -36,7 +37,7 @@ public:
 class PointLight : public Light {
 public:
     Point position;
-    PointLight(double intensity, Point position,
+    PointLight(ColorIntensity intensity, Point position,
                Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->position = position;
@@ -54,12 +55,12 @@ public:
         this->position.y += (rand() % 10 - 5) * scalar;
         this->position.z += (rand() % 10 - 5) * scalar;
     };
-    double get_intensity(RenderObject *render_object, Point point) {
+    ColorIntensity get_intensity(RenderObject *render_object, Point point) {
         Point direction = vector_sub(point, this->position);
 
-        double intensity =
+        ColorIntensity intensity =
                 render_object->get_directional_intensity(point, direction);
-        intensity = intensity * this->intensity;
+        intensity = color_intensity_mul(intensity, this->intensity);
         return intensity;
     };
 };
@@ -67,7 +68,7 @@ public:
 class DirectionalLight : public Light {
 public:
     Point direction;
-    DirectionalLight(double intensity, Point direction,
+    DirectionalLight(ColorIntensity intensity, Point direction,
                      Color color = Color{255, 255, 255}) {
         this->intensity = intensity;
         this->direction = direction;
@@ -78,10 +79,10 @@ public:
                 render_object->is_shadowed_directional(point, this->direction);
         return intercepts;
     };
-    double get_intensity(RenderObject *render_object, Point point) {
-        double intensity = render_object->get_directional_intensity(
+    ColorIntensity get_intensity(RenderObject *render_object, Point point) {
+        ColorIntensity intensity = render_object->get_directional_intensity(
                 point, this->direction);
-        intensity = intensity * this->intensity;
+        intensity = color_intensity_mul(intensity, this->intensity);
         return intensity;
     };
 };

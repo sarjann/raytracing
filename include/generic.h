@@ -18,6 +18,12 @@ struct Color {
     int a = 255;
 };
 
+struct ColorIntensity {
+    double r;
+    double g;
+    double b;
+};
+
 struct Intercept {
     bool intercepts;
     double distance;
@@ -33,3 +39,7 @@ Point vector_scalar(Point v1, double scalar);
 Point vector_div(Point v1, double scalar);
 double vector_mag(Point v1);
 Color color_scalar(Color v1, double scalar);
+Color color_intensity_mul_to_col(Color v1, ColorIntensity intensity);
+ColorIntensity color_intensity_mul(ColorIntensity i1, ColorIntensity i2);
+ColorIntensity color_intensity_add(ColorIntensity i1, ColorIntensity i2);
+ColorIntensity color_intensity_clamp(ColorIntensity intensity);

@@ -18,7 +18,8 @@ public:
     virtual bool is_shadowed_point(Point origin, Point point) {
         throw "Not Implemented";
     }
-    virtual double get_directional_intensity(Point point, Point direction) {
+    virtual ColorIntensity get_directional_intensity(Point point,
+                                                     Point direction) {
         throw "Not Implemented";
     };
     void update_state() {
@@ -131,7 +132,7 @@ public:
         return false;
     };
 
-    double get_directional_intensity(Point point, Point direction) {
+    ColorIntensity get_directional_intensity(Point point, Point direction) {
         double intensity = 0;
 
         // Common
@@ -169,17 +170,7 @@ public:
                 intensity += reflection_intensity;
             }
         }
-        if (intensity > 1) {
-            std::cout << "intensity > 1:";
-            std::cout << intensity << std::endl;
-            intensity = 1;
-        }
-        if (intensity < 0) {
-            std::cout << "intensity < 0:";
-            std::cout << intensity << std::endl;
-            intensity = 0;
-        }
-        return intensity;
+        return ColorIntensity{intensity, intensity, intensity};
     };
 
     Sphere(Point position, double radius, Color color = Color{0, 0, 0, 255},

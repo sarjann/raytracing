@@ -62,8 +62,8 @@ bool is_shadowed(Point point, Light *light,
 Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
                std::vector<Light *> *lights) {
     Point origin = Point{0, 0, 0};
-    // Color color = Color{0, 0, 0}; // Black
-    Color color = Color{255, 255, 255}; // White
+    Color color = Color{0, 0, 0}; // Black
+    // Color color = Color{255, 255, 255}; // White
 
     int distance = std::numeric_limits<int>::max();
     bool intercepts = false;
@@ -83,9 +83,9 @@ Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
 
     bool shadows = true;
     // bool shadows = false;
+    ColorIntensity intensity = {0, 0, 0};
     if (intercepts) {
         // Lighting
-        double intensity = 0;
         for (int i = 0; i < lights->size(); i++) {
             Light *light = lights->at(i);
             // Check if shadowed
@@ -100,11 +100,15 @@ Color raytrace(Point viewport, std::vector<RenderObject *> *render_objects,
                 }
             }
             // Calculate intensity
-            intensity += light->get_intensity(closest_object, intercept_point);
-        }
-        intensity = std::min(intensity, 1.0);
-        color = color_scalar(closest_object->get_color(), intensity);
+            intensity = color_intensity_add(intensity, light->get_intensity(closest_object, intercept_point));
+            double factor = 1;
+            intensity = color_intensity_mul(
+                    intensity, ColorIntensity{factor, factor, factor});
+            intensity = color_intensity_clamp(intensity);
+        };
+        color = color_intensity_mul_to_col(closest_object->get_color(), intensity);
     }
+
     return color;
 }
 
@@ -185,6 +189,7 @@ void update_state(SDL_Renderer *renderer,
     //     RenderObject *object = render_objects->at(i);
     //     object->update_state();
     // }
+
     for (int i = 0; i < lights->size(); i++) {
         Light *light = lights->at(i);
         light->custom();
@@ -212,9 +217,10 @@ int main(int argc, char *argv[]) {
 
     // Make lights
     std::vector<Light *> lights;
-    lights.push_back(new AmbientLight(0.2));
-    lights.push_back(new PointLight(0.6, vector_add(Point{2, 1, 0}, offset)));
-    lights.push_back(new DirectionalLight(0.2, Point{1, 4, 4}));
+    lights.push_back(new AmbientLight({0.2, 0.2, 0.2}));
+    lights.push_back(new PointLight({0.6, 0.6, 0.6},
+                                    vector_add(Point{2, 1, 0}, offset)));
+    lights.push_back(new DirectionalLight({0.2, 0.2, 0.2}, Point{1, 4, 4}));
 
     // Make renderable objects
     std::vector<RenderObject *> render_objects;
