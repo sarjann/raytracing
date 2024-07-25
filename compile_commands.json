@@ -14,8 +14,8 @@
       "./src/*.cpp",
       "-std=c++20"
     ],
-    "directory": "/home/s/repo/cpp/renderer",
-    "file": "/home/s/repo/cpp/renderer/src/main.cpp",
-    "output": "/home/s/repo/cpp/renderer/target/out"
+    "directory": ".",
+    "file": "src/main.cpp",
+    "output": "target/out"
   }
 ]
